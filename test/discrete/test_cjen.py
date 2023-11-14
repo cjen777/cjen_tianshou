@@ -19,7 +19,7 @@ import envpool
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--task", type=str, default="Alien-v4")
+    parser.add_argument("--task", type=str, default="Alien-v5")
     parser.add_argument("--reward-threshold", type=float, default=None)
     parser.add_argument("--seed", type=int, default=1626)
     parser.add_argument("--eps-test", type=float, default=0.05)
@@ -51,16 +51,16 @@ def get_args():
 
 
 def test_dqn(args=get_args()):
-    env = gym.make("GymV26Environment-v0", env_id="ALE/Pong-v5")
+    env = gym.make(args.task)
     args.state_shape = env.observation_space.shape or env.observation_space.n
     args.action_shape = env.action_space.shape or env.action_space.n
     if args.reward_threshold is None:
-        default_reward_threshold = {"Pong-v5": 4000}
+        default_reward_threshold = {"Alien-v5": 195}
         args.reward_threshold = default_reward_threshold.get(args.task, env.spec.reward_threshold)
     # train_envs = gym.make(args.task)
     # you can also use tianshou.env.SubprocVectorEnv
-    train_envs = envpool.make_gymnasium("Pong-v5", num_envs=100)
-    test_envs = envpool.make_gymnasium("Pong-v5", num_envs=10)
+    train_envs = envpool.make_gymnasium("Alien-v5", num_envs=100)
+    test_envs = envpool.make_gymnasium("Alien-v5", num_envs=100)
     # seed
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
@@ -68,8 +68,6 @@ def test_dqn(args=get_args()):
     test_envs.seed(args.seed)
     # Q_param = V_param = {"hidden_sizes": [128]}
     # model
-    print(f'Original shapes: {env.observation_space.shape}')
-    print(f'Shapes: {args.state_shape}, {args.action_shape}')
     net = Net(
         args.state_shape,
         args.action_shape,
