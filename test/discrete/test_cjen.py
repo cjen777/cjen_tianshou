@@ -7,19 +7,17 @@ import numpy as np
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
-import os
-print(f'CD: {os.getcwd()}')
 from tianshou.data import Collector, PrioritizedVectorReplayBuffer, VectorReplayBuffer
 from tianshou.env import DummyVectorEnv
 from tianshou.policy import DQNPolicy
 from tianshou.trainer import OffpolicyTrainer
 from tianshou.utils import TensorboardLogger
 from tianshou.utils.net.common import Net
-import envpool
+
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--task", type=str, default="Alien-v5")
+    parser.add_argument("--task", type=str, default="CartPole-v0")
     parser.add_argument("--reward-threshold", type=float, default=None)
     parser.add_argument("--seed", type=int, default=1626)
     parser.add_argument("--eps-test", type=float, default=0.05)
@@ -55,12 +53,13 @@ def test_dqn(args=get_args()):
     args.state_shape = env.observation_space.shape or env.observation_space.n
     args.action_shape = env.action_space.shape or env.action_space.n
     if args.reward_threshold is None:
-        default_reward_threshold = {"Alien-v5": 195}
+        default_reward_threshold = {"CartPole-v0": 195}
         args.reward_threshold = default_reward_threshold.get(args.task, env.spec.reward_threshold)
     # train_envs = gym.make(args.task)
     # you can also use tianshou.env.SubprocVectorEnv
-    train_envs = envpool.make_gymnasium("Alien-v5", num_envs=100)
-    test_envs = envpool.make_gymnasium("Alien-v5", num_envs=100)
+    train_envs = DummyVectorEnv([lambda: gym.make(args.task) for _ in range(args.training_num)])
+    # test_envs = gym.make(args.task)
+    test_envs = DummyVectorEnv([lambda: gym.make(args.task) for _ in range(args.test_num)])
     # seed
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
@@ -68,6 +67,8 @@ def test_dqn(args=get_args()):
     test_envs.seed(args.seed)
     # Q_param = V_param = {"hidden_sizes": [128]}
     # model
+    print(f'Original shapes: {env.observation_space.shape}')
+    print(f'Shapes: {args.state_shape}, {args.action_shape}')
     net = Net(
         args.state_shape,
         args.action_shape,

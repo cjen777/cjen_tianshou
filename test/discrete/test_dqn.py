@@ -8,7 +8,7 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 
 import os
-print(f'CD: {os.getcwd()}')
+# print(f'CD: {os.getcwd()}')
 from tianshou.data import Collector, PrioritizedVectorReplayBuffer, VectorReplayBuffer
 from tianshou.env import DummyVectorEnv
 from tianshou.policy import DQNPolicy
@@ -19,7 +19,7 @@ import envpool
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--task", type=str, default="Alien-v4")
+    parser.add_argument("--task", type=str, default="Asterix-v5")
     parser.add_argument("--reward-threshold", type=float, default=None)
     parser.add_argument("--seed", type=int, default=1626)
     parser.add_argument("--eps-test", type=float, default=0.05)
@@ -30,7 +30,7 @@ def get_args():
     parser.add_argument("--n-step", type=int, default=3)
     parser.add_argument("--target-update-freq", type=int, default=320)
     parser.add_argument("--epoch", type=int, default=20)
-    parser.add_argument("--step-per-epoch", type=int, default=10000)
+    parser.add_argument("--step-per-epoch", type=int, default=100000)
     parser.add_argument("--step-per-collect", type=int, default=10)
     parser.add_argument("--update-per-step", type=float, default=0.1)
     parser.add_argument("--batch-size", type=int, default=64)
@@ -51,16 +51,17 @@ def get_args():
 
 
 def test_dqn(args=get_args()):
-    env = gym.make("GymV26Environment-v0", env_id="ALE/Pong-v5")
+    env = gym.make("GymV26Environment-v0", env_id="ALE/Asterix-v5")
     args.state_shape = env.observation_space.shape or env.observation_space.n
+    args.state_shape = (4, 84, 84)
     args.action_shape = env.action_space.shape or env.action_space.n
     if args.reward_threshold is None:
-        default_reward_threshold = {"Pong-v5": 4000}
+        default_reward_threshold = {"Asterix-v5": 4000}
         args.reward_threshold = default_reward_threshold.get(args.task, env.spec.reward_threshold)
     # train_envs = gym.make(args.task)
     # you can also use tianshou.env.SubprocVectorEnv
-    train_envs = envpool.make_gymnasium("Pong-v5", num_envs=100)
-    test_envs = envpool.make_gymnasium("Pong-v5", num_envs=10)
+    train_envs = envpool.make_gymnasium("Asterix-v5", num_envs=10)
+    test_envs = envpool.make_gymnasium("Asterix-v5", num_envs=100)
     # seed
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
@@ -68,8 +69,8 @@ def test_dqn(args=get_args()):
     test_envs.seed(args.seed)
     # Q_param = V_param = {"hidden_sizes": [128]}
     # model
-    print(f'Original shapes: {env.observation_space.shape}')
-    print(f'Shapes: {args.state_shape}, {args.action_shape}')
+    # print(f'Original shapes: {env.observation_space.shape}')
+    # print(f'Shapes: {args.state_shape}, {args.action_shape}')
     net = Net(
         args.state_shape,
         args.action_shape,
